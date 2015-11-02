@@ -279,16 +279,26 @@ module.exports = function(grunt) {
 
                 var fileName = images[i];
 
+                var xCoord1 = 0;
+                var yCoord1 = 0;
+                var xCoord2 = 100;
+                var yCoord2 = 40;
 
                 if (excelData != undefined && excelData.length > 0 && excelData[0].data != undefined){
                     excelData[0].data.forEach(function(value){
                         if (value[0] == fileName){
                             var area = $('<area/>');
 
-                            area.attr('coords','10,2,3,12');
+
+                            var cords = xCoord1 + ',' + yCoord1 + ',' + xCoord2 + ',' + yCoord2;
+                            area.attr('coords', cords);
                             area.attr('href', value[1]);
                             area.attr('alt',value[2]);
                             map.append(area);
+                            xCoord1 += 20;
+                            yCoord1 +=15;
+                            xCoord2 +=20;
+                            yCoord2 += 15;
                         }
                     })
                 };
