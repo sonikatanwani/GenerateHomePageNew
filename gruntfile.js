@@ -1,4 +1,7 @@
 var cheerio = require('cheerio');
+var sizeOf = require('image-size');
+var xlsx = require('node-xlsx');
+
 module.exports = function(grunt) {
     grunt.initConfig({
         watch: {
@@ -9,100 +12,301 @@ module.exports = function(grunt) {
                 nospawn: true
             }
         },
-        imagemin: {
-            // Task
-            dynamic: {
-                options: {
-                    optimizationLevel: 5
-                }, // Another target
-                files: [{
-                    expand: true, // Enable dynamic expansion
-                    cwd: '<%=watch.src%>/', // Src matches are relative to this path
-                    src: ['**/*.{png,jpg,gif}'], // Actual patterns to match
-                    dest: '<%=watch.src%>/' // Destination path prefix
-                }]
+
+        prettify: {
+            options: {
+                "indent": 2,
+                "indent_char": " ",
+                "indent_scripts": "normal",
+                "wrap_line_length": 0,
+                "brace_style": "collapse",
+                "preserve_newlines": true,
+                "max_preserve_newlines": 1,
+                "unformatted": [
+                    "a",
+                    "code",
+                    "pre"
+                ]
+            },
+            one: {
+                src: '<%=watch.src%>/homepage.html',
+                dest: '<%=watch.src%>/homepage.html'
             }
-        },
-        spell: {
-          files: '<%=watch.src%>/index.txt'
         }
     });
-    grunt.loadNpmTasks('grunt-contrib-jshint');
-    grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-contrib-imagemin');
-    grunt.loadNpmTasks('grunt-spell');
 
-    var tag = grunt.option('target') || 'dev';
-    grunt.registerTask('hpCoremetrics', function() {
-        
-       
-        var htmlContext = grunt.file.read(grunt.config.get("watch.src")+"/index.html");
-        $ = cheerio.load(htmlContext);
-       
-        $('area').each(function() {
-            var alt = $(this).attr('alt').replace(/[^\w\s]/gi, '');
-            var href = $(this).attr('href');
-            var baseReplace = "${baseUrl}";
-            var isBaseUrl = /(http(s)?:\/\/)?(www)?1?.?macys.com/.test(href);
-            var isnum = /^\d+$/.test(href);
-            var isStandardUrl = /standard/.test(href);
-            
-            if (isnum) {    
-                var numberString = $(this).attr('href').toString()
-                if (numberString.length <=5) {
-                    $(this).attr('href', '${catUrl}' + href +'&${cm_re}'+ numberString + ':' + alt);
+   // grunt.loadNpmTasks('grunt-debug-inspector');
+    grunt.loadNpmTasks('grunt-prettify');
+
+    grunt.registerTask('createHTML', function() {
+
+
+            var excelData;
+
+            if (grunt.file.exists(grunt.config.get("watch.src") + '/linking_doc.xlsx')){
+                excelData = xlsx.parse(grunt.config.get("watch.src") + '/linking_doc.xlsx');
+            }
+
+            var genericExplicitStyles = 'body.NavAppHomePage #bd {width: 960px !important; border:none !important;line-height: 0px !important;} #globalContentContainer .row div { padding-right: 0;}';
+
+
+            function addImageStyle(imageId, width, height) {
+                genericExplicitStyles += "#" + imageId + "{display : inline-block ; float:left; width:" + width + "px !important; height:" + height + "px !important;}";
+            }
+
+            function addFloaterImageStyle(imageId, width, height) {
+                genericExplicitStyles += "#" + imageId + "{ width:" + width + "px !important; height: " + height + "px !important;}";
+            }
+
+            function ApplyFoundation(currentImageCounter, colCount) {
+                var currentImageCounter = parseInt(currentImageCounter);
+                var colCount = parseInt(colCount);
+
+                var divRow = $('<div/>');
+                divRow.attr("class", "row collapse");
+
+                for (var k = 0; k < colCount; k++) {
+                    var divCol = $('<div/>');
+                    divCol.attr("class", "small-" + imageSize[currentImageCounter].width / 60 + " columns");
+
+                    var img = $('<img/>');
+                    img.attr("src", 'images/' + images[currentImageCounter]);
+                    img.attr("width", imageSize[currentImageCounter].width);
+                    img.attr("height", imageSize[currentImageCounter].height);
+                    img.attr("usemap", '#HP_map' + currentImageCounter);
+                    img.attr("alt", ' ');
+
+                    divCol.append(img);
+                    divRow.append(divCol);
+                    currentImageCounter += 1;
+
+                }
+                return divRow;
+
+            }
+
+
+            function ApplyGenericStyle(currentImageCounter, colCount) {
+                var divRow = $('<div/>');
+                divRow.attr("style", "display:block;");
+                var currentImageCounter = parseInt(currentImageCounter);
+                var colCount = parseInt(colCount);
+
+                for (var k = 0; k < colCount; k++) {
+                    var img = $('<img/>');
+                    var imageId = currentImageCounter;
+                    img.attr("id", "img_" + imageId);
+                    img.attr("src", 'images/' + images[currentImageCounter]);
+                    img.attr("width", imageSize[currentImageCounter].width);
+                    img.attr("height", imageSize[currentImageCounter].height);
+                    img.attr("usemap", '#HP_map' + currentImageCounter);
+                    img.attr("alt", ' ');
+                    addImageStyle("img_" + imageId, imageSize[currentImageCounter].width, imageSize[currentImageCounter].height);
+
+                    divRow.append(img);
+                    currentImageCounter += 1;
+                }
+
+                return divRow;
+
+            }
+
+
+            function ApplyBlockGrid(currentImageCounter, colCount) {
+                var currentImageCounter = parseInt(currentImageCounter);
+                var colCount = parseInt(colCount);
+
+                var divRow = $('<div/>');
+                divRow.attr("class", "row collapse");
+                var ul = $('<ul/>');
+                ul.attr("class", "small-block-grid-" + colCount);
+                divRow.append(ul);
+
+                for (var k = 0; k < colCount; k++) {
+                    var li = $('<li/>');
+                    var img = $('<img/>');
+                    img.attr("src", 'images/' + images[currentImageCounter]);
+                    img.attr("width", imageSize[currentImageCounter].width);
+                    img.attr("height", imageSize[currentImageCounter].height);
+                    img.attr("usemap", '#HP_map' + currentImageCounter);
+                    img.attr("alt", ' ');
+                    li.append(img);
+                    ul.append(li);
+                    currentImageCounter += 1;
+
+                }
+                return divRow;
+
+
+            }
+
+            $ = cheerio.load('');
+
+            var images = [];
+            var imageSize = [];
+            var floaterImageSize;
+            var foundation = true;
+            var blockGrid = true;
+            var imageCounter = 0;
+
+
+            grunt.file.recurse(grunt.config.get("watch.src") + '/images', function (abspath, rootdir, subdir, filename) {
+
+                var pngType = filename.match('png' + "$") == 'png';
+                var jpgType = filename.match('jpg' + "$") == 'jpg';
+                var jpegtype = filename.match('jpeg' + "$") == 'jpeg';
+
+                if (pngType || jpgType || jpegtype) {
+
+                    if (filename == 'floater.png') {
+                        floaterImageSize = sizeOf(abspath);
+                    }
+                    else {
+                        images.push(filename);
+                        imageSize.push(sizeOf(abspath));
+                    }
+                }
+            });
+
+            var columnDetails = grunt.option('columnDetails');
+
+            var rowDetails = columnDetails.split(',');
+
+            var mainHTML = $('<html/>');
+            var head = $('<head/>');
+            var style = $('<link rel="stylesheet" href="../macy-base.css" type="text/css"/>');
+            var style1 = $('<link rel="stylesheet" href="../responsive-home.css" type="text/css"/>');
+            var style2 = $('<link rel="stylesheet" href="../home.responsive_css-min-2.css" type="text/css"/>');
+            var style3 = $('<link rel="stylesheet" href="../quickbag.css" type="text/css"/>');
+            var style4 = $('<link rel="stylesheet" href="../avenirblack.css" type="text/css"/>');
+
+            var jqueryScript = $('<script type="text/javascript" src="../jquery-2.1.4.min.js" />');
+
+            head.append(style);
+            head.append(style1);
+            head.append(style2);
+            head.append(style3);
+            head.append(style4);
+
+
+            head.append(jqueryScript);
+
+            var body = $('<body style="width: 960px"/>');
+
+            mainHTML.append(head);
+            mainHTML.append(body);
+
+            $.root().append(mainHTML);
+
+            /*scrolling side roll ad code starts  */
+
+            if (grunt.option('floater')) {
+                var floaterHtml = grunt.file.read('floater_html.txt');
+                var floaterScript = grunt.file.read('floater_script.txt');
+                var floaterStyle = grunt.file.read('floater_style.txt');
+
+                head.append(floaterStyle);
+                head.append(floaterScript);
+                body.append(floaterHtml);
+
+                if (floaterImageSize == undefined) {
+                    //throw error that image not found for floater
+                    grunt.util.error('floating parameter set but no image for floater');
                 }
                 else {
-                    $(this).attr('href', "javascript:pop('${baseUrl}/popup.ognc?popupID=" + numberString + "&${cm_re}:exclusions and details','myDynaPop','scrollbars=yes,width=365,height=600')");
+                    $("#floatingImage").attr('src', 'images/floater.png');
+                    $("#floatingImage").attr('width', floaterImageSize.width);
+                    $("#floatingImage").attr('height', floaterImageSize.height);
+                    addFloaterImageStyle('floatingImage', floaterImageSize.width, floaterImageSize.height);
+
                 }
 
             }
-            else if(isBaseUrl) {     
-                 $(this).attr('href',href.replace(/(http(s)?:\/\/)?(www)?1?.?macys.com/, baseReplace));
-                 href = $(this).attr('href')  
-                 href.indexOf('?') === -1 ? $(this).attr('href', href +'?${cm_re}:'+ alt) : $(this).attr('href', href + '&${cm_re}:'+ alt)  
-            } 
-            else if(isStandardUrl) {
-                $(this).attr('href', function(i, v) {
-                     alt = alt.replace(/\s+/g, '');
-                     return '${' + alt + '_SL}'
 
-                })
-            }   
-            else {
-                 href = $(this).attr('href');
-                href.indexOf('?') === -1 ? $(this).attr('href', href +'?${cm_re}:'+ alt) : $(this).attr('href', href + '&${cm_re}:'+ alt)
-            }                   
-        })
-        grunt.file.write(grunt.config.get("watch.src")+"/updated.html", $.html());
+            var imageCounter = 0;
+
+            fOuter:   for (var i = 0; i < rowDetails.length; i++) {
+
+                fInner:   for (var j = 0; j < rowDetails[i]; j++) {
+                    if (imageSize[imageCounter + j].width % 60 != 0) {
+                        foundation = false;
+                        break fInner;
+                    }
+                }
+
+                if (foundation) {
+                    var row = ApplyFoundation(imageCounter, rowDetails[i]);
+                    body.append(row);
+                    imageCounter = imageCounter + parseInt(rowDetails[i]);
+
+                } else {
+
+                    block:   for (var j = 0; j < rowDetails[i]; j++) {
+                        if (imageSize[imageCounter].width != imageSize[imageCounter + j].width) {
+                            blockGrid = false;
+                            break block;
+                        }
+                    }
+
+                    if (blockGrid) {
+                        var row = ApplyBlockGrid(imageCounter, rowDetails[i]);
+                        body.append(row);
+                        imageCounter = imageCounter + parseInt(rowDetails[i]);
+                    } else {
+
+                        var row = ApplyGenericStyle(imageCounter, rowDetails[i]);
+                        body.append(row);
+                        imageCounter = imageCounter + parseInt(rowDetails[i]);
+
+                    }
+
+                }
+
+                foundation = true;
+                blockGrid = true;
+
+            }
+
+
+            if (genericExplicitStyles != '') {
+                head.append('<style>' + genericExplicitStyles + '</style>');
+            }
+
+
+            for (var i = 0; i < imageCounter; i++) {
+                var map = $('<map/>');
+                map.attr("name", 'HP_map' + i);
+
+                var fileName = images[i];
+
+
+                if (excelData != undefined && excelData.length > 0 && excelData[0].data != undefined){
+                    excelData[0].data.forEach(function(value){
+                        if (value[0] == fileName){
+                            var area = $('<area/>');
+
+                            area.attr('coords','10,2,3,12');
+                            area.attr('href', value[1]);
+                            area.attr('alt',value[2]);
+                            map.append(area);
+                        }
+                    })
+                };
+
+                body.append(map);
+            }
+
+
+            grunt.file.write(grunt.config.get("watch.src") + "/homepage.html", $.html());
+
+        });
+
+
+    grunt.registerTask('createTemplate', function(val) {
+        grunt.config.set('watch.src', val);
+        grunt.task.run('createHTML');
+        grunt.task.run('prettify');
 
     });
-    
-    grunt.registerTask('spell-check', function() {
-        var htmlContext = grunt.file.read(grunt.config.get("watch.src")+"/index.html");
-        $ = cheerio.load(htmlContext);
-        var imageAlt = "";
-        var areaAlt = "";
-        $('img').each(function() {
-            imageAlt = imageAlt + $(this).attr('alt') + '\n'
-        });
-        $('area').each(function() {
-            imageAlt = imageAlt + $(this).attr('alt') + '\n'
-        });
-        grunt.file.write(grunt.config.get("watch.src")+"/index.txt", imageAlt,areaAlt );
-   
 
-
-    })
-
-    grunt.registerTask('homepage', function(val) {
-    grunt.config.set('watch.src', val);
-    grunt.task.run('imagemin'); 
-    grunt.task.run('hpCoremetrics');
-    grunt.task.run('spell-check');
-    grunt.task.run('spell');
-
-
-  
-  });
 }

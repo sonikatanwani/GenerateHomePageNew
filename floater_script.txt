@@ -1,0 +1,17 @@
+<script>
+
+var scrollingSideAdClosed = false;
+
+$(document).ready(function() {
+	$(window).scroll(function() {
+		( $(this).scrollTop() > 80 && !scrollingSideAdClosed ) ? $('#scrollingSideAd').fadeIn() : $('#scrollingSideAd').fadeOut();
+	});
+
+});
+
+function hideScrollingSideAd() {
+    $('#scrollingSideAd').hide();
+	scrollingSideAdClosed = true;
+}
+
+</script>
