@@ -1,4 +1,5 @@
-This grunt task(createTemplate) creates template for homepage.
+This grunt task(createTemplate) creates template for homepage. 
+
 
 It has following features:-
 
@@ -23,6 +24,11 @@ It has following features:-
    —floater: This is optional parameter. If floater functionality is required, this parameter should be specified. 
              If this parameter is set, it require that there should be image with name ‘floater.png’. 
              This image will be use to generate floater html.
+
+It has following features upgraded as compared to previous version(GenerateHomePage repository):
+	1. It applies the styles for ul and li for block-grid over-riding the Macy’s styling.
+	2. It throws a warning when it checks that the images are not cut in a way that any foundation classes can be applied and does not allow to create 	template.
+
 
 
 
