@@ -25,6 +25,11 @@ It has following features:-
              This image will be use to generate floater html.
 
 
+It has following features upgraded as compared to previous version(GenerateHPTemplateV1 repository):
+	
+	1. It logs a message when it checks that the images are not cut in a way that any foundation classes can be applied and generates template using default styles.
+
+
 
 Below is the sample example. I have generated homepage for 111515 using this task.
 

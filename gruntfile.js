@@ -2,7 +2,7 @@ var cheerio = require('cheerio');
 var sizeOf = require('image-size');
 var xlsx = require('node-xlsx');
 
-module.exports = function(grunt) {
+module.exports = function (grunt) {
     grunt.initConfig({
         watch: {
             src: '',
@@ -35,39 +35,64 @@ module.exports = function(grunt) {
         }
     });
 
-   // grunt.loadNpmTasks('grunt-debug-inspector');
+    // grunt.loadNpmTasks('grunt-debug-inspector');
     grunt.loadNpmTasks('grunt-prettify');
 
-    grunt.registerTask('createHTML', function() {
+    grunt.registerTask('createHTML', function () {
+
+        var excelData;
+
+        if (grunt.file.exists(grunt.config.get("watch.src") + '/linking_doc.xlsx')) {
+            excelData = xlsx.parse(grunt.config.get("watch.src") + '/linking_doc.xlsx');
+        }
+
+        var genericExplicitStyles = 'body.NavAppHomePage #bd {width: 960px !important; border:none !important;line-height: 0px !important;} #globalContentContainer .row div { padding-right: 0;}';
 
 
-            var excelData;
-
-            if (grunt.file.exists(grunt.config.get("watch.src") + '/linking_doc.xlsx')){
-                excelData = xlsx.parse(grunt.config.get("watch.src") + '/linking_doc.xlsx');
-            }
-
-            var genericExplicitStyles = 'body.NavAppHomePage #bd {width: 960px !important; border:none !important;line-height: 0px !important;} #globalContentContainer .row div { padding-right: 0;}';
+         function addImageStyle(imageId, width, height) {
+         genericExplicitStyles += "#" + imageId + "{display : inline-block ; float:left; width:" + width + "px !important; height:" + height + "px !important;}";
+         }
 
 
-            function addImageStyle(imageId, width, height) {
-                genericExplicitStyles += "#" + imageId + "{display : inline-block ; float:left; width:" + width + "px !important; height:" + height + "px !important;}";
-            }
+        function addFloaterImageStyle(imageId, width, height) {
+            genericExplicitStyles += "#" + imageId + "{ width:" + width + "px !important; height: " + height + "px !important;}";
+        }
 
-            function addFloaterImageStyle(imageId, width, height) {
-                genericExplicitStyles += "#" + imageId + "{ width:" + width + "px !important; height: " + height + "px !important;}";
-            }
+        function addBlockGridStyle(divClassName ){
+            var divClassName = divClassName;
+            genericExplicitStyles += "." + divClassName+ " ul{margin: 0px!important; padding:0px !important}" ;
+            genericExplicitStyles += "." + divClassName+ " ul li{margin: 0px!important; padding:0px !important}" ;
 
-            function ApplyFoundation(currentImageCounter, colCount) {
-                var currentImageCounter = parseInt(currentImageCounter);
-                var colCount = parseInt(colCount);
+        }
 
-                var divRow = $('<div/>');
-                divRow.attr("class", "row collapse");
+        function ApplyFoundation(currentImageCounter, colCount) {
+            var currentImageCounter = parseInt(currentImageCounter);
+            var colCount = parseInt(colCount);
+            var divRow = $('<div/>');
 
-                for (var k = 0; k < colCount; k++) {
+                if (colCount != 1) {
+                    divRow.attr("class", "row collapse");
+
+                    for (var k = 0; k < colCount; k++) {
+                        var divCol = $('<div/>');
+                        divCol.attr("class", "small-" + imageSize[currentImageCounter].width / 60 + " columns");
+
+                        var img = $('<img/>');
+                        img.attr("src", 'images/' + images[currentImageCounter]);
+                        img.attr("width", imageSize[currentImageCounter].width);
+                        img.attr("height", imageSize[currentImageCounter].height);
+                        img.attr("usemap", '#HP_map' + currentImageCounter);
+                        img.attr("alt", ' ');
+
+                        divCol.append(img);
+                        divRow.append(divCol);
+                        currentImageCounter += 1;
+
+                    }
+                } else {
+                    divRow.attr("class", "row");
                     var divCol = $('<div/>');
-                    divCol.attr("class", "small-" + imageSize[currentImageCounter].width / 60 + " columns");
+                    divCol.attr("class", "small-16 columns");
 
                     var img = $('<img/>');
                     img.attr("src", 'images/' + images[currentImageCounter]);
@@ -79,240 +104,306 @@ module.exports = function(grunt) {
                     divCol.append(img);
                     divRow.append(divCol);
                     currentImageCounter += 1;
-
                 }
                 return divRow;
 
+        }
+
+
+        function ApplyGenericStyle(currentImageCounter, colCount) {
+            var divRow = $('<div/>');
+            divRow.attr("style", "display:block;");
+            var currentImageCounter = parseInt(currentImageCounter);
+            var colCount = parseInt(colCount);
+
+            for (var k = 0; k < colCount; k++) {
+                var img = $('<img/>');
+                var imageId = currentImageCounter;
+                img.attr("id", "img_" + imageId);
+                img.attr("src", 'images/' + images[currentImageCounter]);
+                img.attr("width", imageSize[currentImageCounter].width);
+                img.attr("height", imageSize[currentImageCounter].height);
+                img.attr("usemap", '#HP_map' + currentImageCounter);
+                img.attr("alt", ' ');
+                addImageStyle("img_" + imageId, imageSize[currentImageCounter].width, imageSize[currentImageCounter].height);
+
+                divRow.append(img);
+                currentImageCounter += 1;
             }
 
+            return divRow;
 
-            function ApplyGenericStyle(currentImageCounter, colCount) {
-                var divRow = $('<div/>');
-                divRow.attr("style", "display:block;");
-                var currentImageCounter = parseInt(currentImageCounter);
-                var colCount = parseInt(colCount);
-
-                for (var k = 0; k < colCount; k++) {
-                    var img = $('<img/>');
-                    var imageId = currentImageCounter;
-                    img.attr("id", "img_" + imageId);
-                    img.attr("src", 'images/' + images[currentImageCounter]);
-                    img.attr("width", imageSize[currentImageCounter].width);
-                    img.attr("height", imageSize[currentImageCounter].height);
-                    img.attr("usemap", '#HP_map' + currentImageCounter);
-                    img.attr("alt", ' ');
-                    addImageStyle("img_" + imageId, imageSize[currentImageCounter].width, imageSize[currentImageCounter].height);
-
-                    divRow.append(img);
-                    currentImageCounter += 1;
-                }
-
-                return divRow;
-
-            }
+        }
 
 
-            function ApplyBlockGrid(currentImageCounter, colCount) {
-                var currentImageCounter = parseInt(currentImageCounter);
-                var colCount = parseInt(colCount);
 
-                var divRow = $('<div/>');
-                divRow.attr("class", "row collapse");
-                var ul = $('<ul/>');
-                ul.attr("class", "small-block-grid-" + colCount);
-                divRow.append(ul);
+        function ApplyBlockGrid(currentImageCounter, colCount) {
+            var currentImageCounter = parseInt(currentImageCounter);
+            var colCount = parseInt(colCount);
 
-                for (var k = 0; k < colCount; k++) {
-                    var li = $('<li/>');
-                    var img = $('<img/>');
-                    img.attr("src", 'images/' + images[currentImageCounter]);
-                    img.attr("width", imageSize[currentImageCounter].width);
-                    img.attr("height", imageSize[currentImageCounter].height);
-                    img.attr("usemap", '#HP_map' + currentImageCounter);
-                    img.attr("alt", ' ');
-                    li.append(img);
-                    ul.append(li);
-                    currentImageCounter += 1;
+            var divRow = $('<div/>');
+            divRow.attr("class", "row collapse");
+            divRow.addClass("block_grid");
+            var ul = $('<ul/>');
+            ul.attr("class", "small-block-grid-" + colCount);
+            divRow.append(ul);
 
-                }
-                return divRow;
-
+            for (var k = 0; k < colCount; k++) {
+                var li = $('<li/>');
+                var img = $('<img/>');
+                img.attr("src", 'images/' + images[currentImageCounter]);
+                img.attr("width", imageSize[currentImageCounter].width);
+                img.attr("height", imageSize[currentImageCounter].height);
+                img.attr("usemap", '#HP_map' + currentImageCounter);
+                img.attr("alt", ' ');
+                li.append(img);
+                ul.append(li);
+                currentImageCounter += 1;
 
             }
 
-            $ = cheerio.load('');
-
-            var images = [];
-            var imageSize = [];
-            var floaterImageSize;
-            var foundation = true;
-            var blockGrid = true;
-            var imageCounter = 0;
+            if(applyBlock){
+                addBlockGridStyle("block_grid");
+            }
+            return divRow;
 
 
-            grunt.file.recurse(grunt.config.get("watch.src") + '/images', function (abspath, rootdir, subdir, filename) {
+        }
 
-                var pngType = filename.match('png' + "$") == 'png';
-                var jpgType = filename.match('jpg' + "$") == 'jpg';
-                var jpegtype = filename.match('jpeg' + "$") == 'jpeg';
+        $ = cheerio.load('');
 
-                if (pngType || jpgType || jpegtype) {
-
-                    if (filename == 'floater.png') {
-                        floaterImageSize = sizeOf(abspath);
-                    }
-                    else {
-                        images.push(filename);
-                        imageSize.push(sizeOf(abspath));
-                    }
-                }
-            });
-
-            var columnDetails = grunt.option('columnDetails');
-
-            var rowDetails = columnDetails.split(',');
-
-            var mainHTML = $('<html/>');
-            var head = $('<head/>');
-            var style = $('<link rel="stylesheet" href="../macy-base.css" type="text/css"/>');
-            var style1 = $('<link rel="stylesheet" href="../responsive-home.css" type="text/css"/>');
-            var style2 = $('<link rel="stylesheet" href="../home.responsive_css-min-2.css" type="text/css"/>');
-            var style3 = $('<link rel="stylesheet" href="../quickbag.css" type="text/css"/>');
-            var style4 = $('<link rel="stylesheet" href="../avenirblack.css" type="text/css"/>');
-
-            var jqueryScript = $('<script type="text/javascript" src="../jquery-2.1.4.min.js" />');
-
-            head.append(style);
-            head.append(style1);
-            head.append(style2);
-            head.append(style3);
-            head.append(style4);
+        var images = [];
+        var imageSize = [];
+        var floaterImageSize;
+        var foundation = true;
+        var blockGrid = true;
+        var imageCounter = 0;
+        var blockInstance = true;
 
 
-            head.append(jqueryScript);
+        grunt.file.recurse(grunt.config.get("watch.src") + '/images', function (abspath, rootdir, subdir, filename) {
 
-            var body = $('<body style="width: 960px"/>');
+            var pngType = filename.match('png' + "$") == 'png';
+            var jpgType = filename.match('jpg' + "$") == 'jpg';
+            var jpegtype = filename.match('jpeg' + "$") == 'jpeg';
 
-            mainHTML.append(head);
-            mainHTML.append(body);
+            if (pngType || jpgType || jpegtype) {
 
-            $.root().append(mainHTML);
-
-            /*scrolling side roll ad code starts  */
-
-            if (grunt.option('floater')) {
-                var floaterHtml = grunt.file.read('floater_html.txt');
-                var floaterScript = grunt.file.read('floater_script.txt');
-                var floaterStyle = grunt.file.read('floater_style.txt');
-
-                head.append(floaterStyle);
-                head.append(floaterScript);
-                body.append(floaterHtml);
-
-                if (floaterImageSize == undefined) {
-                    //throw error that image not found for floater
-                    grunt.util.error('floating parameter set but no image for floater');
+                if (filename == 'floater.png') {
+                    floaterImageSize = sizeOf(abspath);
                 }
                 else {
-                    $("#floatingImage").attr('src', 'images/floater.png');
-                    $("#floatingImage").attr('width', floaterImageSize.width);
-                    $("#floatingImage").attr('height', floaterImageSize.height);
-                    addFloaterImageStyle('floatingImage', floaterImageSize.width, floaterImageSize.height);
-
+                    images.push(filename);
+                    imageSize.push(sizeOf(abspath));
                 }
+            }
+        });
+
+        var columnDetails = grunt.option('columnDetails');
+
+        var rowDetails = columnDetails.split(',');
+
+        var mainHTML = $('<html/>');
+        var head = $('<head/>');
+        var style = $('<link rel="stylesheet" href="../macy-base.css" type="text/css"/>');
+        var style1 = $('<link rel="stylesheet" href="../responsive-home.css" type="text/css"/>');
+        var style2 = $('<link rel="stylesheet" href="../home.responsive_css-min-2.css" type="text/css"/>');
+        var style3 = $('<link rel="stylesheet" href="../quickbag.css" type="text/css"/>');
+        var style4 = $('<link rel="stylesheet" href="../avenirblack.css" type="text/css"/>');
+
+        var jqueryScript = $('<script type="text/javascript" src="../jquery-2.1.4.min.js" />');
+
+        head.append(style);
+        head.append(style1);
+        head.append(style2);
+        head.append(style3);
+        head.append(style4);
+
+
+        head.append(jqueryScript);
+
+        var body = $('<body style="width: 960px"/>');
+
+        mainHTML.append(head);
+        mainHTML.append(body);
+
+        $.root().append(mainHTML);
+
+        /*scrolling side roll ad code starts  */
+
+        if (grunt.option('floater')) {
+            var floaterHtml = grunt.file.read('floater_html.txt');
+            var floaterScript = grunt.file.read('floater_script.txt');
+            var floaterStyle = grunt.file.read('floater_style.txt');
+
+            head.append(floaterStyle);
+            head.append(floaterScript);
+            body.append(floaterHtml);
+
+            if (floaterImageSize == undefined) {
+                //throw error that image not found for floater
+                grunt.util.error('floating parameter set but no image for floater');
+            }
+            else {
+                $("#floatingImage").attr('src', 'images/floater.png');
+                $("#floatingImage").attr('width', floaterImageSize.width);
+                $("#floatingImage").attr('height', floaterImageSize.height);
+                addFloaterImageStyle('floatingImage', floaterImageSize.width, floaterImageSize.height);
 
             }
 
-            var imageCounter = 0;
+        }
 
-            fOuter:   for (var i = 0; i < rowDetails.length; i++) {
+        var imageCounter = 0;
 
+        /*
+
+         fOuter:   for (var i = 0; i < rowDetails.length; i++) {
+
+         fInner:   for (var j = 0; j < rowDetails[i]; j++) {
+         if (imageSize[imageCounter + j].width % 60 != 0) {
+         foundation = false;
+         break fInner;
+         }
+         }
+
+         if (foundation) {
+         var row = ApplyFoundation(imageCounter, rowDetails[i]);
+         body.append(row);
+         imageCounter = imageCounter + parseInt(rowDetails[i]);
+
+         } else {
+         if (rowDetails[i] != 1) {
+         block:   for (var j = 1; j < rowDetails[i]; j++) {
+         if (imageSize[imageCounter].width != imageSize[imageCounter + j].width) {
+         blockGrid = false;
+         break block;
+
+         }
+         }
+
+         if (blockGrid) {
+         var row = ApplyBlockGrid(imageCounter, rowDetails[i]);
+         body.append(row);
+         imageCounter = imageCounter + parseInt(rowDetails[i]);
+         } else {
+
+         var row = ApplyGenericStyle(imageCounter, rowDetails[i]);
+         body.append(row);
+         imageCounter = imageCounter + parseInt(rowDetails[i]);
+
+         }
+
+         }
+
+         foundation = true;
+         blockGrid = true;
+         }
+
+         }
+
+
+
+         if (genericExplicitStyles != '') {
+         head.append('<style>' + genericExplicitStyles + '</style>');
+         }
+
+         */
+        fOuter:   for (var i = 0; i < rowDetails.length; i++) {
+
+            if (parseInt(rowDetails[i]) != 1) {
                 fInner:   for (var j = 0; j < rowDetails[i]; j++) {
                     if (imageSize[imageCounter + j].width % 60 != 0) {
                         foundation = false;
                         break fInner;
                     }
                 }
+            }else{
+                foundation = true;
+                if(imageSize[imageCounter].width != 960){
+                    grunt.log.write("the image for row " + (i + 1) +" is not cut 960px. generating  template anyway");
+                }
 
-                if (foundation) {
-                    var row = ApplyFoundation(imageCounter, rowDetails[i]);
+            }
+
+            if (foundation) {
+                var row = ApplyFoundation(imageCounter, rowDetails[i]);
+                body.append(row);
+                imageCounter = imageCounter + parseInt(rowDetails[i]);
+
+            } else {
+                block:   for (var j = 0; j < rowDetails[i]; j++) {
+                    if (imageSize[imageCounter].width != imageSize[imageCounter + j].width) {
+                        blockGrid = false;
+                        grunt.log.write("the images for row" + (i + 1) + "has not been cut properly so that any foundation rules could be applied. generate template for the row based on generic styles");
+                        break block;
+                    }
+                }
+
+                if (blockGrid) {
+                    var row = ApplyBlockGrid(imageCounter, rowDetails[i]);
+                    body.append(row);
+                    imageCounter = imageCounter + parseInt(rowDetails[i]);
+                    blockInstance = false;
+                } else {
+                    var row = ApplyGenericStyle(imageCounter, rowDetails[i]);
                     body.append(row);
                     imageCounter = imageCounter + parseInt(rowDetails[i]);
 
-                } else {
-
-                    block:   for (var j = 0; j < rowDetails[i]; j++) {
-                        if (imageSize[imageCounter].width != imageSize[imageCounter + j].width) {
-                            blockGrid = false;
-                            break block;
-                        }
-                    }
-
-                    if (blockGrid) {
-                        var row = ApplyBlockGrid(imageCounter, rowDetails[i]);
-                        body.append(row);
-                        imageCounter = imageCounter + parseInt(rowDetails[i]);
-                    } else {
-
-                        var row = ApplyGenericStyle(imageCounter, rowDetails[i]);
-                        body.append(row);
-                        imageCounter = imageCounter + parseInt(rowDetails[i]);
-
-                    }
-
                 }
-
-                foundation = true;
-                blockGrid = true;
-
             }
 
+            foundation = true;
+            blockGrid = true;
 
-            if (genericExplicitStyles != '') {
-                head.append('<style>' + genericExplicitStyles + '</style>');
+        }
+
+        if (genericExplicitStyles != '') {
+            head.append('<style>' + genericExplicitStyles + '</style>');
+        }
+
+
+        for (var i = 0; i < imageCounter; i++) {
+            var map = $('<map/>');
+            map.attr("name", 'HP_map' + i);
+
+            var fileName = images[i];
+
+            var xCoord1 = 0;
+            var yCoord1 = 0;
+            var xCoord2 = 100;
+            var yCoord2 = 40;
+
+            if (excelData != undefined && excelData.length > 0 && excelData[0].data != undefined) {
+                excelData[0].data.forEach(function (value) {
+                    if (value[0] == fileName) {
+                        var area = $('<area/>');
+
+
+                        var cords = xCoord1 + ',' + yCoord1 + ',' + xCoord2 + ',' + yCoord2;
+                        area.attr('coords', cords);
+                        area.attr('href', value[1]);
+                        area.attr('alt', value[2]);
+                        map.append(area);
+                        xCoord1 += 20;
+                        yCoord1 += 15;
+                        xCoord2 += 20;
+                        yCoord2 += 15;
+                    }
+                })
             }
+            ;
+
+            body.append(map);
+        }
 
 
-            for (var i = 0; i < imageCounter; i++) {
-                var map = $('<map/>');
-                map.attr("name", 'HP_map' + i);
+        grunt.file.write(grunt.config.get("watch.src") + "/homepage.html", $.html());
 
-                var fileName = images[i];
-
-                var xCoord1 = 0;
-                var yCoord1 = 0;
-                var xCoord2 = 100;
-                var yCoord2 = 40;
-
-                if (excelData != undefined && excelData.length > 0 && excelData[0].data != undefined){
-                    excelData[0].data.forEach(function(value){
-                        if (value[0] == fileName){
-                            var area = $('<area/>');
+    });
 
 
-                            var cords = xCoord1 + ',' + yCoord1 + ',' + xCoord2 + ',' + yCoord2;
-                            area.attr('coords', cords);
-                            area.attr('href', value[1]);
-                            area.attr('alt',value[2]);
-                            map.append(area);
-                            xCoord1 += 20;
-                            yCoord1 +=15;
-                            xCoord2 +=20;
-                            yCoord2 += 15;
-                        }
-                    })
-                };
-
-                body.append(map);
-            }
-
-
-            grunt.file.write(grunt.config.get("watch.src") + "/homepage.html", $.html());
-
-        });
-
-
-    grunt.registerTask('createTemplate', function(val) {
+    grunt.registerTask('createTemplate', function (val) {
         grunt.config.set('watch.src', val);
         grunt.task.run('createHTML');
         grunt.task.run('prettify');
