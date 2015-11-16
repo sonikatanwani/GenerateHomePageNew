@@ -244,7 +244,7 @@ module.exports = function(grunt) {
 
             if (floaterImageSize == undefined) {
                 //throw error that image not found for floater
-                grunt.util.error('floating parameter set but no image for floater');
+                grunt.log.write('floating parameter set but no image for floater');
             }
             else {
                 $("#floatingImage").attr('src', 'images/floater.png');
