@@ -137,9 +137,10 @@ module.exports = function (grunt) {
 
 
 
-        function ApplyBlockGrid(currentImageCounter, colCount) {
+        function ApplyBlockGrid(currentImageCounter, colCount,applyBlock) {
             var currentImageCounter = parseInt(currentImageCounter);
             var colCount = parseInt(colCount);
+            var applyBlock = applyBlock;
 
             var divRow = $('<div/>');
             divRow.attr("class", "row collapse");
@@ -256,59 +257,6 @@ module.exports = function (grunt) {
 
         var imageCounter = 0;
 
-        /*
-
-         fOuter:   for (var i = 0; i < rowDetails.length; i++) {
-
-         fInner:   for (var j = 0; j < rowDetails[i]; j++) {
-         if (imageSize[imageCounter + j].width % 60 != 0) {
-         foundation = false;
-         break fInner;
-         }
-         }
-
-         if (foundation) {
-         var row = ApplyFoundation(imageCounter, rowDetails[i]);
-         body.append(row);
-         imageCounter = imageCounter + parseInt(rowDetails[i]);
-
-         } else {
-         if (rowDetails[i] != 1) {
-         block:   for (var j = 1; j < rowDetails[i]; j++) {
-         if (imageSize[imageCounter].width != imageSize[imageCounter + j].width) {
-         blockGrid = false;
-         break block;
-
-         }
-         }
-
-         if (blockGrid) {
-         var row = ApplyBlockGrid(imageCounter, rowDetails[i]);
-         body.append(row);
-         imageCounter = imageCounter + parseInt(rowDetails[i]);
-         } else {
-
-         var row = ApplyGenericStyle(imageCounter, rowDetails[i]);
-         body.append(row);
-         imageCounter = imageCounter + parseInt(rowDetails[i]);
-
-         }
-
-         }
-
-         foundation = true;
-         blockGrid = true;
-         }
-
-         }
-
-
-
-         if (genericExplicitStyles != '') {
-         head.append('<style>' + genericExplicitStyles + '</style>');
-         }
-
-         */
         fOuter:   for (var i = 0; i < rowDetails.length; i++) {
 
             if (parseInt(rowDetails[i]) != 1) {
@@ -341,7 +289,7 @@ module.exports = function (grunt) {
                 }
 
                 if (blockGrid) {
-                    var row = ApplyBlockGrid(imageCounter, rowDetails[i]);
+                    var row = ApplyBlockGrid(imageCounter, rowDetails[i],blockInstance);
                     body.append(row);
                     imageCounter = imageCounter + parseInt(rowDetails[i]);
                     blockInstance = false;
