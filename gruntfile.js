@@ -61,7 +61,7 @@ module.exports = function (grunt) {
         function addBlockGridStyle(divClassName ){
             var divClassName = divClassName;
             genericExplicitStyles += "." + divClassName+ " ul{margin: 0px!important; padding:0px !important}" ;
-            genericExplicitStyles += "." + divClassName+ " ul li{margin: 0px!important; padding:0px !important}" ;
+            genericExplicitStyles += "." + divClassName+ " ul li{margin: 0px!important; padding:0px !important;width:auto !important;}" ;
 
         }
 
@@ -180,6 +180,7 @@ module.exports = function (grunt) {
         var blockGrid = true;
         var imageCounter = 0;
         var blockInstance = true;
+        var imgValidationRegex = new RegExp('(^[A-Za-z0-9_-]{1,}\.(?:png|jpg|gif|jpeg))');
 
 
         grunt.file.recurse(grunt.config.get("watch.src") + '/images', function (abspath, rootdir, subdir, filename) {
@@ -187,8 +188,16 @@ module.exports = function (grunt) {
             var pngType = filename.match('png' + "$") == 'png';
             var jpgType = filename.match('jpg' + "$") == 'jpg';
             var jpegtype = filename.match('jpeg' + "$") == 'jpeg';
+            var gifType = filename.match('gif' + "$") == 'gif';
 
-            if (pngType || jpgType || jpegtype) {
+
+            if (pngType || jpgType || jpegtype || gifType) {
+
+
+                if (!imgValidationRegex.test(filename)){
+                    grunt.warn('Image file name (' + filename + ') does not follow the standard. ');
+                    return;
+                }
 
                 if (filename == 'floater.png') {
                     floaterImageSize = sizeOf(abspath);
