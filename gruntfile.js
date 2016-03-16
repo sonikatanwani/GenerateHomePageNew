@@ -285,6 +285,7 @@ module.exports = function (grunt) {
 
             if (foundation) {
                 var row = ApplyFoundation(imageCounter, rowDetails[i]);
+                row.attr("data-row-type" ,"row-" + (i+1) + "-");
                 body.append(row);
                 imageCounter = imageCounter + parseInt(rowDetails[i]);
 
@@ -300,11 +301,13 @@ module.exports = function (grunt) {
                 if (blockGrid) {
                     var row = ApplyBlockGrid(imageCounter, rowDetails[i],blockInstance);
                     body.append(row);
+                    row.attr("data-row-type" ,"row-" + (i+1) + "-");
                     imageCounter = imageCounter + parseInt(rowDetails[i]);
                     blockInstance = false;
                 } else {
                     var row = ApplyGenericStyle(imageCounter, rowDetails[i]);
                     body.append(row);
+                    row.attr("data-row-type" ,"row-" + (i+1) + "-");
                     imageCounter = imageCounter + parseInt(rowDetails[i]);
 
                 }
